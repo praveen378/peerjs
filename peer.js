@@ -1,4 +1,4 @@
-// peer-server/peer.js
+ // peer-server/peer.js
 import express from "express";
 import http from "http";
 import { ExpressPeerServer } from "peer";
@@ -9,35 +9,41 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173"; // 👈 change this to your frontend
+// ✅ Set this to your actual deployed frontend domain
+const CLIENT_URL = process.env.CLIENT_URL || "https://baatekare.netlify.app";
 
-// CORS Middleware
+// ✅ CORS Middleware
 app.use(cors({
   origin: CLIENT_URL,
   credentials: true,
 }));
 
-// PeerJS Headers Middleware
+// ✅ PeerJS Headers Middleware (to prevent CORS preflight issues)
 app.use("/peerjs", (req, res, next) => {
   res.header("Access-Control-Allow-Origin", CLIENT_URL);
   res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200); // Handle preflight requests
+  }
   next();
 });
 
-// PeerJS Server
+// ✅ Initialize PeerJS
 const peerServer = ExpressPeerServer(server, {
-  debug: true,
+  debug: false, // set to false for production
   path: "/",
 });
 
 app.use("/peerjs", peerServer);
 
-// Health Check
+// ✅ Health Check Route
 app.get("/", (req, res) => {
-  res.send("🚀 PeerJS Server is running");
+  res.send("🚀 PeerJS Signaling Server is live in production");
 });
 
-// Start server
+// ✅ Start Server
 const PORT = process.env.PEER_PORT || 3001;
 server.listen(PORT, () => {
   console.log(`📡 PeerJS Server running at http://localhost:${PORT}/peerjs`);
